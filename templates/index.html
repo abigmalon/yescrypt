@@ -1,0 +1,792 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Yescrypt密码破解工具</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            opacity: 0.9;
+            font-size: 1.1em;
+        }
+
+        .content {
+            padding: 30px;
+        }
+
+        .section {
+            margin-bottom: 30px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            border-left: 4px solid #667eea;
+        }
+
+        .section h2 {
+            color: #333;
+            margin-bottom: 20px;
+            font-size: 1.5em;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #555;
+            font-weight: 600;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: border-color 0.3s;
+        }
+
+        .form-group input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .btn {
+            padding: 12px 30px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-right: 10px;
+            margin-top: 10px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background: #5a6268;
+            transform: translateY(-2px);
+        }
+
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .info-box {
+            background: #e7f3ff;
+            border-left: 4px solid #2196F3;
+            padding: 15px;
+            margin-bottom: 20px;
+            border-radius: 5px;
+        }
+
+        .info-box h3 {
+            color: #1976D2;
+            margin-bottom: 10px;
+        }
+
+        .info-box p {
+            color: #555;
+            margin: 5px 0;
+        }
+
+        .progress-container {
+            margin-top: 20px;
+            display: none;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 30px;
+            background: #e0e0e0;
+            border-radius: 15px;
+            overflow: hidden;
+            margin-bottom: 10px;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+            width: 0%;
+            transition: width 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 600;
+        }
+
+        .result-box {
+            margin-top: 20px;
+            padding: 20px;
+            border-radius: 8px;
+            display: none;
+        }
+
+        .result-success {
+            background: #d4edda;
+            border-left: 4px solid #28a745;
+            color: #155724;
+        }
+
+        .result-error {
+            background: #f8d7da;
+            border-left: 4px solid #dc3545;
+            color: #721c24;
+        }
+
+        .result-info {
+            background: #d1ecf1;
+            border-left: 4px solid #17a2b8;
+            color: #0c5460;
+        }
+
+        .hash-info {
+            background: white;
+            padding: 15px;
+            border-radius: 5px;
+            margin-top: 10px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9em;
+        }
+
+        .hash-info p {
+            margin: 5px 0;
+        }
+
+        .status-indicator {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-right: 8px;
+        }
+
+        .status-idle {
+            background: #6c757d;
+        }
+
+        .status-running {
+            background: #ffc107;
+            animation: pulse 1.5s infinite;
+        }
+
+        .status-completed {
+            background: #28a745;
+        }
+
+        .status-error {
+            background: #dc3545;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .log-area {
+            background: #1e1e1e;
+            color: #d4d4d4;
+            padding: 15px;
+            border-radius: 5px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9em;
+            max-height: 300px;
+            overflow-y: auto;
+            margin-top: 10px;
+            display: none;
+        }
+
+        .log-entry {
+            margin: 5px 0;
+        }
+
+        .log-time {
+            color: #858585;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🔐 Yescrypt密码破解工具</h1>
+            <p>Kali Linux Shadow文件密码破解系统</p>
+        </div>
+
+        <div class="content">
+            <!-- 配置区域 -->
+            <div class="section">
+                <h2>📋 配置信息</h2>
+                <div class="form-group">
+                    <label for="dict_file">字典文件路径：</label>
+                    <input type="text" id="dict_file" value="dict.txt" placeholder="默认: dict.txt">
+                </div>
+                <div class="form-group">
+                    <label for="shadow_file">Shadow文件路径：</label>
+                    <input type="text" id="shadow_file" value="shadow.txt" placeholder="默认: shadow.txt">
+                </div>
+                <button class="btn btn-secondary" onclick="loadShadowInfo()">📖 读取Shadow信息</button>
+            </div>
+
+            <!-- 读取系统Shadow文件 -->
+            <div class="section">
+                <h2>💾 读取系统Shadow文件</h2>
+                <p style="color: #666; margin-bottom: 15px;">从系统 /etc/shadow 文件读取yescrypt密码哈希并保存到本地（需要管理员权限）</p>
+                <div class="info-box" style="background: #fff3cd; border-left-color: #ffc107;">
+                    <h3 style="color: #856404;">⚠️ 权限提示</h3>
+                    <p style="color: #856404;">读取系统shadow文件需要管理员权限。如果程序没有root权限，系统会尝试使用sudo命令。请确保：</p>
+                    <ul style="color: #856404; margin-left: 20px; margin-top: 10px;">
+                        <li>当前用户具有sudo权限，或</li>
+                        <li>使用root用户运行程序（sudo python3 app.py）</li>
+                    </ul>
+                </div>
+                <div class="form-group">
+                    <label for="system_shadow_output">输出文件路径：</label>
+                    <input type="text" id="system_shadow_output" value="shadow.txt" placeholder="默认: shadow.txt">
+                </div>
+                <button class="btn btn-primary" onclick="readSystemShadow()" id="btn_read_system">📥 读取系统Shadow文件</button>
+                <div class="result-box" id="system_shadow_result" style="display: none;"></div>
+            </div>
+
+            <!-- 生成密码字典 -->
+            <div class="section">
+                <h2>🔑 生成密码字典</h2>
+                <p style="color: #666; margin-bottom: 15px;">自定义生成指定长度的密码字典文件</p>
+                
+                <div class="form-group">
+                    <label for="dict_length">密码长度：</label>
+                    <input type="number" id="dict_length" value="4" min="4" max="6" placeholder="4-6位">
+                </div>
+                
+                <div class="form-group">
+                    <label for="custom_charset">自定义字符集（可选）：</label>
+                    <input type="text" id="custom_charset" placeholder="例如: 0123456789 或 abcABC123 或 直接输入任意字符">
+                    <p style="color: #666; font-size: 0.9em; margin-top: 5px;">如果填写此项，将使用您指定的字符集，忽略下面的复选框选项</p>
+                </div>
+                
+                <div class="form-group">
+                    <label style="display: flex; align-items: center;">
+                        <input type="checkbox" id="use_digits" checked style="width: auto; margin-right: 10px;">
+                        使用数字 (0-9)
+                    </label>
+                </div>
+                <div class="form-group">
+                    <label style="display: flex; align-items: center;">
+                        <input type="checkbox" id="use_letters" checked style="width: auto; margin-right: 10px;">
+                        使用字母 (a-z, A-Z)
+                    </label>
+                </div>
+                <div class="form-group">
+                    <label style="display: flex; align-items: center;">
+                        <input type="checkbox" id="use_special" style="width: auto; margin-right: 10px;">
+                        使用特殊字符 (!@#$%^&*()_+-=[]{}|;:,.<>?)
+                    </label>
+                </div>
+                
+                <div class="form-group">
+                    <label for="dict_output_file">输出文件路径：</label>
+                    <input type="text" id="dict_output_file" value="dict.txt" placeholder="默认: dict.txt">
+                </div>
+                
+                <div class="info-box" style="background: #d1ecf1; border-left-color: #17a2b8;">
+                    <p style="color: #0c5460;"><strong>注意：</strong>如果输出文件已存在，系统会自动创建副本（如 dict_1.txt, dict_2.txt 等）</p>
+                    <p style="color: #0c5460; margin-top: 5px;"><strong>提示：</strong>密码数量 = 字符集大小 ^ 长度。例如：4位数字+字母 = 62^4 = 14,776,960 个密码（可能过大）</p>
+                    <p style="color: #0c5460; margin-top: 5px;"><strong>自定义字符集示例：</strong></p>
+                    <ul style="color: #0c5460; margin-left: 20px; margin-top: 5px;">
+                        <li>仅数字：<code>0123456789</code></li>
+                        <li>仅小写字母：<code>abcdefghijklmnopqrstuvwxyz</code></li>
+                        <li>数字+字母：<code>0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ</code></li>
+                        <li>自定义组合：<code>abc123!@#</code></li>
+                    </ul>
+                </div>
+                
+                <button class="btn btn-primary" onclick="generateDict()" id="btn_generate_dict">⚙️ 生成密码字典</button>
+                <div class="result-box" id="dict_result" style="display: none;"></div>
+            </div>
+
+            <!-- Shadow信息显示 -->
+            <div class="section" id="shadow_info_section" style="display: none;">
+                <h2>👤 Shadow文件信息</h2>
+                <div id="shadow_info"></div>
+            </div>
+
+            <!-- 彩虹表生成 -->
+            <div class="section">
+                <h2>🌈 生成彩虹表</h2>
+                <p style="color: #666; margin-bottom: 15px;">将字典中的密码加密后生成彩虹表文件</p>
+                <button class="btn btn-primary" onclick="generateRainbow()" id="btn_rainbow">🚀 生成彩虹表</button>
+                
+                <div class="progress-container" id="rainbow_progress">
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="rainbow_progress_fill">0%</div>
+                    </div>
+                    <p id="rainbow_status">准备中...</p>
+                </div>
+
+                <div class="result-box" id="rainbow_result"></div>
+            </div>
+
+            <!-- 密码破解 -->
+            <div class="section">
+                <h2>🔓 密码破解</h2>
+                <p style="color: #666; margin-bottom: 15px;">使用字典文件破解shadow文件中的密码</p>
+                <button class="btn btn-primary" onclick="startCrack()" id="btn_crack">⚡ 开始破解</button>
+                
+                <div class="progress-container" id="crack_progress">
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="crack_progress_fill">0%</div>
+                    </div>
+                    <p id="crack_status">准备中...</p>
+                </div>
+
+                <div class="result-box" id="crack_result"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let crackProgressInterval = null;
+        let rainbowProgressInterval = null;
+
+        // 读取Shadow信息
+        async function loadShadowInfo() {
+            const shadowFile = document.getElementById('shadow_file').value || 'shadow.txt';
+            
+            try {
+                const response = await fetch(`/api/shadow/read?file=${encodeURIComponent(shadowFile)}`);
+                const data = await response.json();
+                
+                if (data.success) {
+                    const section = document.getElementById('shadow_info_section');
+                    const infoDiv = document.getElementById('shadow_info');
+                    
+                    let html = `<p style="margin-bottom: 15px; color: #666;"><strong>找到 ${data.count} 个条目：</strong></p>`;
+                    
+                    // 显示所有条目
+                    data.entries.forEach((entry, index) => {
+                        html += `
+                            <div class="info-box" style="margin-bottom: 15px;">
+                                <h3>用户 ${index + 1}: ${entry.username}</h3>
+                                <p><strong>完整哈希:</strong> <code style="word-break: break-all;">${entry.hash}</code></p>
+                                <div class="hash-info" style="margin-top: 10px;">
+                                    <p><strong>算法标识:</strong> ${entry.hash_info.algorithm}</p>
+                                    <p><strong>轮数参数:</strong> ${entry.hash_info.rounds}</p>
+                                    <p><strong>Salt值:</strong> ${entry.hash_info.salt}</p>
+                                    <p><strong>哈希值:</strong> ${entry.hash_info.hash}</p>
+                                    <p><strong>完整Salt:</strong> <code>${entry.hash_info.full_salt}</code></p>
+                                </div>
+                            </div>
+                        `;
+                    });
+                    
+                    html += `<p style="color: #666; font-size: 0.9em; margin-top: 10px;">注意：破解功能将使用第一个条目进行破解</p>`;
+                    
+                    infoDiv.innerHTML = html;
+                    section.style.display = 'block';
+                } else {
+                    alert('错误: ' + data.message);
+                }
+            } catch (error) {
+                alert('请求失败: ' + error.message);
+            }
+        }
+
+        // 读取系统Shadow文件
+        async function readSystemShadow() {
+            const outputFile = document.getElementById('system_shadow_output').value || 'shadow.txt';
+            const btn = document.getElementById('btn_read_system');
+            const resultDiv = document.getElementById('system_shadow_result');
+            
+            btn.disabled = true;
+            resultDiv.style.display = 'none';
+            
+            try {
+                const response = await fetch('/api/shadow/read-system', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        output_file: outputFile
+                    })
+                });
+                
+                const data = await response.json();
+                resultDiv.style.display = 'block';
+                btn.disabled = false;
+                
+                if (data.success) {
+                    resultDiv.className = 'result-box result-success';
+                    resultDiv.innerHTML = `
+                        <h3>✅ 读取成功</h3>
+                        <p>${data.message}</p>
+                        <p><strong>找到条目数:</strong> ${data.count}</p>
+                        <p><strong>输出文件:</strong> ${data.output_file}</p>
+                        <p style="margin-top: 10px; color: #155724;">提示：文件已保存，您现在可以使用"读取Shadow信息"按钮查看内容。</p>
+                    `;
+                    // 自动更新shadow文件路径
+                    document.getElementById('shadow_file').value = data.output_file;
+                } else {
+                    resultDiv.className = 'result-box result-error';
+                    resultDiv.innerHTML = `
+                        <h3>❌ 读取失败</h3>
+                        <p>${data.message}</p>
+                    `;
+                }
+            } catch (error) {
+                resultDiv.style.display = 'block';
+                resultDiv.className = 'result-box result-error';
+                resultDiv.innerHTML = `
+                    <h3>❌ 请求失败</h3>
+                    <p>${error.message}</p>
+                `;
+                btn.disabled = false;
+            }
+        }
+
+        // 生成密码字典
+        async function generateDict() {
+            const length = parseInt(document.getElementById('dict_length').value);
+            const customCharset = document.getElementById('custom_charset').value.trim();
+            const useDigits = document.getElementById('use_digits').checked;
+            const useLetters = document.getElementById('use_letters').checked;
+            const useSpecial = document.getElementById('use_special').checked;
+            const outputFile = document.getElementById('dict_output_file').value || 'dict.txt';
+            const btn = document.getElementById('btn_generate_dict');
+            const resultDiv = document.getElementById('dict_result');
+            
+            // 验证长度
+            if (length < 4 || length > 6) {
+                alert('密码长度必须在4-6位之间');
+                return;
+            }
+            
+            // 如果使用自定义字符集，验证字符集
+            if (customCharset) {
+                if (customCharset.length === 0) {
+                    alert('自定义字符集不能为空');
+                    return;
+                }
+                // 计算密码数量
+                const totalPossible = Math.pow(customCharset.length, length);
+                if (totalPossible > 1000000) {
+                    const confirm = window.confirm(
+                        `警告：将生成约 ${totalPossible.toLocaleString()} 个密码（字符集大小: ${customCharset.length}，长度: ${length}），这可能需要较长时间和大量磁盘空间。\n\n是否继续？`
+                    );
+                    if (!confirm) {
+                        return;
+                    }
+                }
+            } else {
+                // 使用复选框选项，验证至少选择一种字符类型
+                if (!useDigits && !useLetters && !useSpecial) {
+                    alert('至少需要选择一种字符类型（数字、字母或特殊字符），或填写自定义字符集');
+                    return;
+                }
+                
+                // 计算可能的密码数量（用于警告）
+                let charsetSize = 0;
+                if (useDigits) charsetSize += 10;
+                if (useLetters) charsetSize += 52;
+                if (useSpecial) charsetSize += 20;
+                const totalPossible = Math.pow(charsetSize, length);
+                
+                if (totalPossible > 1000000) {
+                    const confirm = window.confirm(
+                        `警告：将生成约 ${totalPossible.toLocaleString()} 个密码，这可能需要较长时间和大量磁盘空间。\n\n是否继续？`
+                    );
+                    if (!confirm) {
+                        return;
+                    }
+                }
+            }
+            
+            btn.disabled = true;
+            resultDiv.style.display = 'none';
+            
+            try {
+                const requestBody = {
+                    length: length,
+                    output_file: outputFile
+                };
+                
+                // 如果提供了自定义字符集，优先使用
+                if (customCharset) {
+                    requestBody.custom_charset = customCharset;
+                } else {
+                    requestBody.use_digits = useDigits;
+                    requestBody.use_letters = useLetters;
+                    requestBody.use_special = useSpecial;
+                }
+                
+                const response = await fetch('/api/dict/generate', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(requestBody)
+                });
+                
+                const data = await response.json();
+                resultDiv.style.display = 'block';
+                btn.disabled = false;
+                
+                if (data.success) {
+                    resultDiv.className = 'result-box result-success';
+                    resultDiv.innerHTML = `
+                        <h3>✅ 生成成功</h3>
+                        <p>${data.message}</p>
+                        <p><strong>生成密码数:</strong> ${data.count.toLocaleString()}</p>
+                        <p><strong>输出文件:</strong> ${data.output_file}</p>
+                        <p style="margin-top: 10px; color: #155724;">提示：文件已保存，您现在可以使用该字典文件进行破解。</p>
+                    `;
+                    // 自动更新字典文件路径
+                    document.getElementById('dict_file').value = data.output_file;
+                } else {
+                    resultDiv.className = 'result-box result-error';
+                    resultDiv.innerHTML = `
+                        <h3>❌ 生成失败</h3>
+                        <p>${data.message}</p>
+                    `;
+                }
+            } catch (error) {
+                resultDiv.style.display = 'block';
+                resultDiv.className = 'result-box result-error';
+                resultDiv.innerHTML = `
+                    <h3>❌ 请求失败</h3>
+                    <p>${error.message}</p>
+                `;
+                btn.disabled = false;
+            }
+        }
+
+        // 生成彩虹表
+        async function generateRainbow() {
+            const dictFile = document.getElementById('dict_file').value || 'dict.txt';
+            const shadowFile = document.getElementById('shadow_file').value || 'shadow.txt';
+            const btn = document.getElementById('btn_rainbow');
+            const progressDiv = document.getElementById('rainbow_progress');
+            const resultDiv = document.getElementById('rainbow_result');
+            
+            btn.disabled = true;
+            progressDiv.style.display = 'block';
+            resultDiv.style.display = 'none';
+            
+            try {
+                const response = await fetch('/api/rainbow/generate', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        dict_file: dictFile,
+                        shadow_file: shadowFile,
+                        rainbow_file: 'rainbow.txt'
+                    })
+                });
+                
+                const data = await response.json();
+                if (data.success) {
+                    // 开始轮询进度
+                    rainbowProgressInterval = setInterval(checkRainbowProgress, 500);
+                } else {
+                    alert('错误: ' + data.message);
+                    btn.disabled = false;
+                }
+            } catch (error) {
+                alert('请求失败: ' + error.message);
+                btn.disabled = false;
+            }
+        }
+
+        // 检查彩虹表生成进度
+        async function checkRainbowProgress() {
+            try {
+                const response = await fetch('/api/rainbow/progress');
+                const progress = await response.json();
+                
+                const progressFill = document.getElementById('rainbow_progress_fill');
+                const statusText = document.getElementById('rainbow_status');
+                const resultDiv = document.getElementById('rainbow_result');
+                const btn = document.getElementById('btn_rainbow');
+                
+                if (progress.total > 0) {
+                    const percent = Math.round((progress.current / progress.total) * 100);
+                    progressFill.style.width = percent + '%';
+                    progressFill.textContent = percent + '%';
+                    statusText.textContent = `处理中: ${progress.current} / ${progress.total}`;
+                }
+                
+                if (progress.status === 'completed' || progress.status === 'error') {
+                    clearInterval(rainbowProgressInterval);
+                    btn.disabled = false;
+                    
+                    if (progress.result) {
+                        resultDiv.style.display = 'block';
+                        if (progress.result.success) {
+                            resultDiv.className = 'result-box result-success';
+                            resultDiv.innerHTML = `
+                                <h3>✅ 生成成功</h3>
+                                <p>${progress.result.message}</p>
+                            `;
+                        } else {
+                            resultDiv.className = 'result-box result-error';
+                            resultDiv.innerHTML = `
+                                <h3>❌ 生成失败</h3>
+                                <p>${progress.result.message}</p>
+                            `;
+                        }
+                    }
+                }
+            } catch (error) {
+                console.error('获取进度失败:', error);
+            }
+        }
+
+        // 开始破解
+        async function startCrack() {
+            const dictFile = document.getElementById('dict_file').value || 'dict.txt';
+            const shadowFile = document.getElementById('shadow_file').value || 'shadow.txt';
+            const btn = document.getElementById('btn_crack');
+            const progressDiv = document.getElementById('crack_progress');
+            const resultDiv = document.getElementById('crack_result');
+            
+            btn.disabled = true;
+            progressDiv.style.display = 'block';
+            resultDiv.style.display = 'none';
+            
+            try {
+                const response = await fetch('/api/crack/start', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        dict_file: dictFile,
+                        shadow_file: shadowFile
+                    })
+                });
+                
+                const data = await response.json();
+                if (data.success) {
+                    // 开始轮询进度
+                    crackProgressInterval = setInterval(checkCrackProgress, 500);
+                } else {
+                    alert('错误: ' + data.message);
+                    btn.disabled = false;
+                }
+            } catch (error) {
+                alert('请求失败: ' + error.message);
+                btn.disabled = false;
+            }
+        }
+
+        // 检查破解进度
+        async function checkCrackProgress() {
+            try {
+                const response = await fetch('/api/crack/progress');
+                const progress = await response.json();
+                
+                const progressFill = document.getElementById('crack_progress_fill');
+                const statusText = document.getElementById('crack_status');
+                const resultDiv = document.getElementById('crack_result');
+                const btn = document.getElementById('btn_crack');
+                
+                if (progress.total > 0) {
+                    const percent = Math.round((progress.current / progress.total) * 100);
+                    progressFill.style.width = percent + '%';
+                    progressFill.textContent = percent + '%';
+                    statusText.textContent = `尝试中: ${progress.current} / ${progress.total} (当前: ${progress.current_password || 'N/A'})`;
+                }
+                
+                if (progress.status === 'completed' || progress.status === 'error') {
+                    clearInterval(crackProgressInterval);
+                    btn.disabled = false;
+                    
+                    if (progress.result) {
+                        resultDiv.style.display = 'block';
+                        if (progress.result.success) {
+                            resultDiv.className = 'result-box result-success';
+                            resultDiv.innerHTML = `
+                                <h3>🎉 破解成功！</h3>
+                                <p><strong>用户名:</strong> ${progress.result.username}</p>
+                                <p><strong>密码明文:</strong> <code style="font-size: 1.2em; color: #28a745; font-weight: bold;">${progress.result.password}</code></p>
+                                <p><strong>尝试次数:</strong> ${progress.result.attempts} / ${progress.result.total}</p>
+                                <p>${progress.result.message}</p>
+                            `;
+                        } else {
+                            resultDiv.className = 'result-box result-error';
+                            resultDiv.innerHTML = `
+                                <h3>❌ 破解失败</h3>
+                                <p>${progress.result.message}</p>
+                                <p><strong>已尝试:</strong> ${progress.result.attempts} / ${progress.result.total} 个密码</p>
+                            `;
+                        }
+                    }
+                }
+            } catch (error) {
+                console.error('获取进度失败:', error);
+            }
+        }
+
+        // 页面加载时自动读取shadow信息
+        window.addEventListener('load', function() {
+            loadShadowInfo();
+        });
+    </script>
+</body>
+</html>
+
